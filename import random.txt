@@ -1,0 +1,91 @@
+import random
+import heapq
+
+# Define a Product class
+class Product:
+    def __init__(self, name, cost, profit, demand):
+        self.name = name
+        self.cost = cost
+        self.profit = profit
+        self.demand = demand
+
+# Sample product list
+products = [
+    Product("Phone", 200, 80, 0.9),
+    Product("Laptop", 500, 200, 0.7),
+    Product("Tablet", 300, 100, 0.8),
+    Product("Headphones", 50, 30, 0.95)
+]
+
+BUDGET = 1000  # Total money we can spend on inventory
+
+# 🧠 Utility function to evaluate a state
+def evaluate(state):
+    total_cost = sum(state[i] * products[i].cost for i in range(len(products)))
+    if total_cost > BUDGET:
+        return -1  # Invalid state
+    total_profit = sum(state[i] * products[i].profit for i in range(len(products)))
+    return total_profit
+
+# 🎯 Heuristic for best-first search (uses demand)
+def heuristic(state):
+    return sum(state[i] * products[i].demand for i in range(len(products)))
+
+# 🧗 Hill Climbing Algorithm
+def hill_climbing():
+    current = [0] * len(products)
+    while True:
+        neighbors = []
+        for i in range(len(products)):
+            new_state = current[:]
+            new_state[i] += 1
+            if evaluate(new_state) != -1:
+                neighbors.append(new_state)
+        
+        if not neighbors:
+            break
+        
+        next_state = max(neighbors, key=evaluate)
+        if evaluate(next_state) <= evaluate(current):
+            break
+        current = next_state
+    return current
+
+# 🌟 Best-First Search
+def best_first_search():
+    start = [0] * len(products)
+    frontier = []
+    heapq.heappush(frontier, (-heuristic(start), start))
+    best = start
+
+    while frontier:
+        _, current = heapq.heappop(frontier)
+        if evaluate(current) > evaluate(best):
+            best = current
+        for i in range(len(products)):
+            new_state = current[:]
+            new_state[i] += 1
+            if evaluate(new_state) != -1:
+                heapq.heappush(frontier, (-heuristic(new_state), new_state))
+    
+    return best
+
+# 📊 Results
+def display_result(state, method_name):
+    print(f"\n{method_name} Result:")
+    total_cost = total_profit = 0
+    for i in range(len(products)):
+        qty = state[i]
+        prod = products[i]
+        total_cost += qty * prod.cost
+        total_profit += qty * prod.profit
+        print(f"{prod.name}: {qty} units")
+    print(f"Total Cost: ${total_cost}")
+    print(f"Expected Profit: ${total_profit}")
+
+# Run both algorithms
+hill_result = hill_climbing()
+best_result = best_first_search()
+
+display_result(hill_result, "Hill Climbing")
+display_result(best_result, "Best-First Search")
